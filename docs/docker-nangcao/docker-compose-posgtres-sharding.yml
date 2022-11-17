@@ -1,0 +1,61 @@
+version: '3.7'
+
+services:
+  master:
+    image: docker.io/bitnami/postgresql:14
+    ports:
+      - '8532:5432'
+    deploy:
+      mode: replicated
+      replicas: 1
+      placement:
+        constraints:
+          - node.hostname == mdodb-master
+      restart_policy:
+        condition: on-failure
+    volumes:
+      - mdo-data-master:/bitnami/postgresql
+    environment:
+      - POSTGRESQL_REPLICATION_MODE=master
+      - POSTGRESQL_REPLICATION_USER=repl_boffice
+      - POSTGRESQL_REPLICATION_PASSWORD=repl_G4pTKVL7uPbNV78v
+      - POSTGRESQL_USERNAME=postgres
+      - POSTGRESQL_PASSWORD=postgres
+      - POSTGRESQL_DATABASE=boffice_mst
+      - ALLOW_EMPTY_PASSWORD=yes
+      - TZ=Asia/Bangkok
+    networks:
+      - dwsnet
+  slave1:
+    image: docker.io/bitnami/postgresql:14
+    deploy:
+      mode: replicated
+      replicas: 1
+      placement:
+        constraints:
+          - node.hostname == mdodb-slave
+      restart_policy:
+        condition: on-failure
+    ports:
+      - '8533:5432'
+    volumes:
+      - mdo-data-slave:/bitnami/postgesql
+    environment:
+      - POSTGRESQL_REPLICATION_MODE=slave
+      - POSTGRESQL_REPLICATION_USER=repl_boffice
+      - POSTGRESQL_REPLICATION_PASSWORD=repl_G4pTKVL7uPbNV78v
+      - POSTGRESQL_MASTER_HOST=master
+      - POSTGRESQL_PASSWORD=postgres
+      - POSTGRESQL_MASTER_PORT_NUMBER=5432
+      - ALLOW_EMPTY_PASSWORD=yes
+      - TZ=Asia/Bangkok
+    networks:
+      - dwsnet
+networks:
+  dwsnet:
+    external: true
+volumes:
+  mdo-data-slave:
+    driver: local
+  mdo-data-master:
+    driver: local

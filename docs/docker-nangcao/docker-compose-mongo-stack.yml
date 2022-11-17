@@ -1,0 +1,97 @@
+
+
+version: '3.7'
+
+services:
+  master:
+    image: docker.io/bitnami/mongodb:5.0
+    ports:
+      - "27017:27017"
+    deploy:
+      mode: replicated
+      replicas: 1
+      placement:
+        constraints:
+          - node.hostname == mdodb-master
+      restart_policy:
+        condition: on-failure
+    environment:
+      - MONGODB_ADVERTISED_HOSTNAME=master
+      - MONGODB_REPLICA_SET_MODE=primary
+      - MONGODB_ROOT_PASSWORD=mongodb
+      - MONGODB_REPLICA_SET_KEY=mongodbKey
+      - MONGODB_ROOT_USERNAME=root
+      - MONGODB_ROOT_PASSWORD=root123
+      - MONGODB_USERNAME=mongodb
+      - MONGODB_PASSWORD=mongodb
+      - MONGODB_DATABASE=mdodb
+    volumes:
+      - '/home/ubuntu/mongodb/data:/bitnami/mongodb'
+    networks:
+      - dwsnet
+  arbiter:
+    image: docker.io/bitnami/mongodb:5.0
+    deploy:
+      mode: replicated
+      replicas: 1
+      placement:
+        constraints:
+          - node.hostname == mdodb-slave
+    environment:
+      - MONGODB_ADVERTISED_HOSTNAME=arbiter
+      - MONGODB_REPLICA_SET_MODE=arbiter
+      - MONGODB_INITIAL_PRIMARY_HOST=master
+      - MONGODB_PRIMARY_ROOT_USERNAME=root
+      - MONGODB_INITIAL_PRIMARY_ROOT_PASSWORD=root123
+      - MONGODB_REPLICA_SET_KEY=mongodbKey
+    volumes:
+      - '/home/ubuntu/mongodb/arbiter_data:/bitnami/mongodb'
+    networks:
+      - dwsnet
+  slave1:
+    image: docker.io/bitnami/mongodb:5.0
+    ports:
+      - "27018:27017"
+    deploy:
+      mode: replicated
+      replicas: 1
+      placement:
+        constraints:
+          - node.hostname == mdodb-master
+      restart_policy:
+        condition: on-failure
+    environment:
+      - MONGODB_ADVERTISED_HOSTNAME=slave1
+      - MONGODB_REPLICA_SET_MODE=secondary
+      - MONGODB_INITIAL_PRIMARY_HOST=master
+      - MONGODB_PRIMARY_ROOT_USERNAME=root
+      - MONGODB_INITIAL_PRIMARY_ROOT_PASSWORD=root123
+      - MONGODB_REPLICA_SET_KEY=mongodbKey
+    volumes:
+      - '/home/ubuntu/mongodb/slave1_data:/bitnami/mongodb'
+    networks:
+      - dwsnet
+  slave2:
+    image: docker.io/bitnami/mongodb:5.0
+    ports:
+      - "27019:27017"
+    deploy:
+      mode: replicated
+      replicas: 1
+      placement:
+        constraints:
+          - node.hostname == mdodb-slave
+    environment:
+      - MONGODB_ADVERTISED_HOSTNAME=slave2
+      - MONGODB_REPLICA_SET_MODE=secondary
+      - MONGODB_INITIAL_PRIMARY_HOST=master
+      - MONGODB_PRIMARY_ROOT_USERNAME=root
+      - MONGODB_INITIAL_PRIMARY_ROOT_PASSWORD=root123
+      - MONGODB_REPLICA_SET_KEY=mongodbKey
+    volumes:
+      - '/home/ubuntu/mongodb/slave2_data:/bitnami/mongodb'
+    networks:
+      - dwsnet
+networks:
+  dwsnet:
+    external: true

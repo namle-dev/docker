@@ -1,0 +1,52 @@
+version: '3.7'
+
+services:
+  node1:
+    image: docker.io/bitnami/redis-cluster:7.0
+    deploy:
+      mode: replicated
+      replicas: 1
+      placement:
+        constraints:
+          - node.hostname == mdodb-master
+      restart_policy:
+        condition: on-failure
+    ports:
+      - "8378:6379"
+    networks:
+      - dwsnet  
+    volumes:
+      - redis-data-1:/bitnami/redis/data
+    environment:
+      - 'REDIS_PASSWORD=redis'
+      - 'REDIS_NODES=node1 node2'
+  node2:
+    image: docker.io/bitnami/redis-cluster:7.0
+    deploy:
+      mode: replicated
+      replicas: 1
+      placement:
+        constraints:
+          - node.hostname == mdodb-slave
+      restart_policy:
+        condition: on-failure
+    ports:
+      - "8379:6379"
+    networks:
+      - dwsnet
+    volumes:
+      - redis-data-2:/bitnami/redis/data
+    environment:
+      - 'REDIS_PASSWORD=redis'
+      - 'REDISCLI_AUTH=redis'
+      - 'REDIS_CLUSTER_REPLICAS=1'
+      - 'REDIS_NODES=node1 node2'
+      - 'REDIS_CLUSTER_CREATOR=yes'
+networks:
+  dwsnet:
+    external: true
+volumes:
+  redis-data-1:
+    driver: local
+  redis-data-2:
+    driver: local
